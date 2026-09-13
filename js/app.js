@@ -655,6 +655,20 @@
     return m;
   }
 
+  function buildAccountModal() {
+    var m = document.createElement('div');
+    m.className = 'modal';
+    m.style.width = '340px';
+    m.innerHTML = '<div class="modal-title">Аккаунт</div>' +
+      '<div class="modal-note">Вход через Google Account появится в одном из следующих обновлений — ' +
+      'он позволит синхронизировать заметки между устройствами.</div>' +
+      '<div style="display:flex; gap:var(--space-3); margin-top:var(--space-5)">' +
+      '<button class="btn btn-primary" disabled style="opacity:.45; cursor:default">Войти через Google</button>' +
+      '<button class="btn btn-ghost" data-act="close">Закрыть</button></div>';
+    m.querySelector('[data-act="close"]').addEventListener('click', closeModal);
+    return m;
+  }
+
   /* ── Применение настроек и общий рендер ── */
   function applySettings() {
     var font = FONTS.filter(function (f) { return f.key === state.settings.font; })[0] || FONTS[0];
@@ -697,6 +711,7 @@
     render();
   });
   elRemoveNote.addEventListener('click', function () { askDelete(state.active); });
+  $('btn-account').addEventListener('click', function () { openModal(buildAccountModal()); });
 
   // клик мимо меню «+» закрывает его
   document.addEventListener('click', function (e) {
