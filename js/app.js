@@ -355,12 +355,16 @@
     elTrashView.innerHTML = '';
     var head = document.createElement('div');
     head.className = 'trash-head';
-    head.innerHTML = '<span class="trash-title">Корзина</span><span class="link-caps" id="trash-back">К заметкам</span>';
+    head.innerHTML = '<span class="trash-title">Корзина</span>' +
+      (state.trash.length ? '<span class="link-caps danger" id="trash-clear">Очистить</span>' : '') +
+      '<span class="link-caps" id="trash-back"' + (state.trash.length ? ' style="margin-left:var(--space-4)"' : '') + '>К заметкам</span>';
     elTrashView.appendChild(head);
     head.querySelector('#trash-back').addEventListener('click', function () {
       state.trashOpen = false;
       render();
     });
+    var clearBtn = head.querySelector('#trash-clear');
+    if (clearBtn) clearBtn.addEventListener('click', askEmptyTrash);
 
     if (!state.trash.length) {
       var empty = document.createElement('div');
@@ -402,6 +406,25 @@
     });
   }
 
+  function askEmptyTrash() {
+    var n = state.trash.length;
+    if (!n) return;
+    openModal(buildConfirmModal(
+      'Очистить корзину?',
+      n + ' ' + plural(n, 'заметка будет удалена', 'заметки будут удалены', 'заметок будут удалены') + ' безвозвратно.',
+      function () {
+        closeModal();
+        state.trash = [];
+        if (state.vault.kind === 'fs') {
+          state.vault.emptyTrash().catch(function (err) { console.warn('Redax: не удалось очистить корзину', err); });
+        } else {
+          flushSave();
+        }
+        render();
+      }
+    ));
+  }
+
   function restoreFromTrash(i) {
     var f = state.trash.splice(i, 1)[0];
     if (!f) return;
@@ -420,7 +443,7 @@
   function askDelete(i) {
     if (state.files.length < 2) return;
     var f = state.files[i];
-    openModal(buildConfirmModal('«' + f.name + '» переместится в корзину.', function () {
+    openModal(buildConfirmModal('Удалить заметку?', '«' + f.name + '» переместится в корзину.', function () {
       closeModal();
       state.removing = i;
       renderSidebar();
@@ -475,15 +498,16 @@
     if (e.key === 'Escape' && !elModalLayer.hidden) closeModal();
   });
 
-  function buildConfirmModal(text, onConfirm) {
+  function buildConfirmModal(title, text, onConfirm) {
     var m = document.createElement('div');
     m.className = 'modal';
     m.style.width = '340px';
-    m.innerHTML = '<div class="modal-title">Удалить заметку?</div>' +
+    m.innerHTML = '<div class="modal-title"></div>' +
       '<div class="modal-note"></div>' +
       '<div style="display:flex; gap:var(--space-3); margin-top:var(--space-5)">' +
       '<button class="btn btn-primary" data-act="ok">Удалить</button>' +
       '<button class="btn btn-ghost" data-act="cancel">Отмена</button></div>';
+    m.querySelector('.modal-title').textContent = title;
     m.querySelector('.modal-note').textContent = text;
     m.querySelector('[data-act="ok"]').addEventListener('click', onConfirm);
     m.querySelector('[data-act="cancel"]').addEventListener('click', closeModal);

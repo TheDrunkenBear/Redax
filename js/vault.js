@@ -53,6 +53,7 @@
   DemoVault.prototype.rename = function () { return Promise.resolve(); };
   DemoVault.prototype.moveToTrash = function () { return Promise.resolve(); };
   DemoVault.prototype.restore = function () { return Promise.resolve(); };
+  DemoVault.prototype.emptyTrash = function () { return Promise.resolve(); };
 
   /* ── Настоящая папка (File System Access API) ── */
   function FsVault(dirHandle) {
@@ -173,6 +174,11 @@
         return td.removeEntry(trashName);
       }).catch(function () { /* ок */ });
     });
+  };
+
+  FsVault.prototype.emptyTrash = function () {
+    return this.dir.removeEntry('.trash', { recursive: true })
+      .catch(function () { /* корзины нет — уже чисто */ });
   };
 
   FsVault.prototype.sync = function () { return Promise.resolve(); };
